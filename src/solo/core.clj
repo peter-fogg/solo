@@ -12,7 +12,7 @@
   (if (empty? state)
     nil
     {:val (first state)
-     :rest (rest state)}))
+     :rest (apply str (rest state))}))
 
 ;; The constant parser simply returns a parser that always gives the
 ;; same value. Does this sound familiar?
