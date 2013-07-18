@@ -62,3 +62,25 @@
     (let [{val :val new-state :rest} (left state)]
       (when val
         ((right val) new-state)))))
+
+;; We can use the state of our parser with chain-parser, but these two
+;; functions allow us to directly access and modify it.
+(defn get-state
+  "Get the current state of the parser."
+  [state]
+  {:val state :rest state})
+
+(defn put-state
+  "Modify the state of the parser."
+  [state]
+  (fn [_]
+    {:val '() :rest state}))
+
+;; This function allows us to expect a single character, and fail if
+;; it isn't in our string to parse.
+(defn expect-char
+  "Expect `char`, and fail if not present."
+  [char]
+  (fn [state]
+    (when (= char (first state))
+      {:val (str char) :rest (apply str (rest state))})))

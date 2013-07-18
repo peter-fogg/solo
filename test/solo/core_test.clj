@@ -34,3 +34,23 @@
            {:val 123 :rest "foo"})))
   (testing "Returns nil on failure."
     (is (nil? (parse-int "foo")))))
+
+(deftest test-get-state
+  (testing "Accesses the current state of the parser."
+    (is (= (get-state "foo")
+           {:val "foo" :rest "foo"}))
+    (is (= ((chain-parser parse-char (fn [_] get-state)) "foo")
+           {:val "oo" :rest "oo"}))))
+
+(deftest test-put-state
+  (testing "Updates the current state of the parser."
+    (is (= ((put-state "foo") "bar")
+           {:val '() :rest "foo"}))
+    (is (= ((chain-parser parse-char (fn [_] (put-state "foo"))) "bar")
+           {:val '() :rest "foo"}))))
+
+(deftest test-expect-char
+  (testing "Succeeds on the given character and fails otherwise."
+    (is (= ((expect-char \f) "foo")
+           {:val "f" :rest "oo"}))
+    (is (nil? ((expect-char \f) "bar")))))
