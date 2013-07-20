@@ -52,7 +52,7 @@
 (deftest test-expect-char
   (testing "Succeeds on the given character and fails otherwise."
     (is (= ((expect-char \f) "foo")
-           {:val "f" :rest "oo"}))
+           {:val \f :rest "oo"}))
     (is (nil? ((expect-char \f) "bar")))))
 
 (deftest test-parse
@@ -76,7 +76,7 @@
              (expect-char \f)
              (parse-while (partial = \o)))
             "foo"))
-        {:val "f" :rest "oo"}))
+        {:val \f :rest "oo"}))
   (testing "Returns the first non-nil parser value."
     (is (= ((parse-or
              (parse-while (partial = \f))
@@ -102,8 +102,22 @@
 (deftest test-one-of
   (testing "Parses any of the supplied characters."
     (is (= ((one-of "abcd") "a string")
-           {:val "a" :rest " string"}))
+           {:val \a :rest " string"}))
     (is (= ((parse-many (one-of "abcdefg")) "gefbaabec!abacaba")
            {:val "gefbaabec" :rest "!abacaba"})))
   (testing "Returns nil if no characters are found."
     (is (nil? ((one-of "abcd") "ha, nope")))))
+
+(deftest test-none-of
+  (testing "Parses a single character if it is not to be excluded."
+    (is (= ((none-of "abcd") "foo")
+           {:val \f :rest "oo"})))
+  (testing "Rejects any of the supplied characters."
+    (is (nil? ((none-of "abc") "cfoo")))))
+
+(deftest test-parse-string
+  (testing "Parses the given string."
+    (is (= ((parse-string "foo") "foobar")
+           {:val "foo" :rest "bar"})))
+  (testing "Returns nil if the string is not present."
+    (is (nil? ((parse-string "foo") "fobar")))))

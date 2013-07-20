@@ -5,14 +5,29 @@
 ;; state). Those of you familiar with Haskell may recognize this as a
 ;; monad. It is!
 
-;; Our first parser. How exciting!
-(defn parse-char
-  "Parse a single character."
-  [state]
-  (if (empty? state)
-    nil
-    {:val (first state)
-     :rest (apply str (rest state))}))
+;; An example of a parser. How exciting!
+(comment
+  (defn parse-char
+    "Parse a single character."
+    [state]
+    (if (empty? state)
+      nil
+      {:val (first state)
+       :rest (apply str (rest state))})))
+
+;; We can do better, though -- our above implementation of parse-char
+;; isn't very general. Let's abstract a bit.
+(defn satisfy
+  "Returns a parser accepting a character satisfying `pred`."
+  [pred]
+  (fn [state]
+    (let [c (first state)]
+      (when (and c (pred c))
+        {:val c
+         :rest (apply str (rest state))}))))
+
+;; Let's use satisfy to implement parse-char.
+(def parse-char (satisfy (fn [_] true)))
 
 ;; The constant parser simply returns a parser that always gives the
 ;; same value. Does this sound familiar?
@@ -96,9 +111,7 @@
 (defn expect-char
   "Expect `char`, and fail if not present."
   [char]
-  (fn [state]
-    (when (= char (first state))
-      {:val (str char) :rest (apply str (rest state))})))
+  (satisfy (partial = char)))
 
 ;; What if we have a choice of values to parse? parse-or lets us try
 ;; one parser, then the next, then the next, and so on.
@@ -111,6 +124,7 @@
 ;; The parse-many combinator allows us to collect any number of a certain
 ;; parser, and return a list of what we find.
 (defn parse-many
+  "Repeatedly apply `parser`."
   [parser]
   (fn [state]
     ((parse
@@ -124,5 +138,33 @@
 (defn one-of
   "Parse any of the supplied characters."
   [chars]
-  (apply parse-or (for [c chars]
-                    (expect-char c))))
+  (satisfy #(some (partial = %) chars)))
+
+;; If we want to assert that a character is not present in our string,
+;; we can use not-char. It is the opposite of expect-char.
+(defn not-char
+  "Reject the supplied character."
+  [char]
+  (fn [state]
+    (when-not (= char (first state))
+      {:val (str (first state))
+       :rest (apply str (rest state))})))
+
+;; none-of is the just opposite of one-of -- it ensures that it does
+;; not see any of the given characters.
+(defn none-of
+  "Reject any of the supplied characters."
+  [chars]
+  (satisfy #(not (some (partial = %) chars))))
+
+;; If we want to parse a whole string (rather than just a character),
+;; we can do so with parse-string.
+(defn parse-string
+  "Parse the given string."
+  [string]
+  (if-let [c (first string)]
+    (parse
+     (expect-char c)
+     [rest (parse-string (rest string))]
+     (constant (apply str c rest)))
+    (constant '())))
