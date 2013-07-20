@@ -89,3 +89,21 @@
                 (expect-char \f)
                 (expect-char \o)
                 (parse-while (fn [c] (some #{c} "sdfoaij")))) "haha! this won't work")))))
+
+(deftest test-parse-many
+  (testing "Returns the correct parsed string."
+    (is (= ((parse-many (expect-char \f)) "ffffoo")
+           {:val "ffff" :rest "oo"})))
+  (testing "Returns nil if it does not parse."
+    (is (nil? ((parse-many
+                (parse-while #(some #{%} "abcdefg")))
+               "zazzle! pop!")))))
+
+(deftest test-one-of
+  (testing "Parses any of the supplied characters."
+    (is (= ((one-of "abcd") "a string")
+           {:val "a" :rest " string"}))
+    (is (= ((parse-many (one-of "abcdefg")) "gefbaabec!abacaba")
+           {:val "gefbaabec" :rest "!abacaba"})))
+  (testing "Returns nil if no characters are found."
+    (is (nil? ((one-of "abcd") "ha, nope")))))

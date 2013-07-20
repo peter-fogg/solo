@@ -107,3 +107,22 @@
   [& parsers]
   (fn [state]
     (some #(% state) parsers)))
+
+;; The parse-many combinator allows us to collect any number of a certain
+;; parser, and return a list of what we find.
+(defn parse-many
+  [parser]
+  (fn [state]
+    ((parse
+      [val parser]
+      [rest (parse-or (parse-many parser) (constant []))]
+      (constant (apply str (cons val rest))))
+     state)))
+
+;; We can use one-of to give us a choice between any of a number of
+;; characters.
+(defn one-of
+  "Parse any of the supplied characters."
+  [chars]
+  (apply parse-or (for [c chars]
+                    (expect-char c))))
