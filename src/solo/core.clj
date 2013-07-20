@@ -59,9 +59,8 @@
   "Combine two parsers into a new one."
   [left right]
   (fn [state]
-    (let [{val :val new-state :rest} (left state)]
-      (when val
-        ((right val) new-state)))))
+    (when-let [{val :val new-state :rest} (left state)]
+      ((right val) new-state))))
 
 ;; We can use the state of our parser with chain-parser, but these two
 ;; functions allow us to directly access and modify it.
@@ -76,6 +75,22 @@
   (fn [_]
     {:val '() :rest state}))
 
+;; Using chain-parser can get tedious and error-prone, what with all
+;; the nested functions. We define a macro, parse, which cleans up the
+;; process for us.
+(defmacro parse [& body]
+  (cond
+   (nil? body) '()
+   (= 1 (count body)) (first body)
+   :else (let [f (first body)
+               [parser param] (if (vector? f)
+                                [(second f) [(first f)]]
+                                [f `[_#]])]
+           (list 'chain-parser
+                 parser
+                 `(fn ~param
+                    ~`(parse ~@(rest body)))))))
+
 ;; This function allows us to expect a single character, and fail if
 ;; it isn't in our string to parse.
 (defn expect-char
@@ -84,3 +99,11 @@
   (fn [state]
     (when (= char (first state))
       {:val (str char) :rest (apply str (rest state))})))
+
+;; What if we have a choice of values to parse? parse-or lets us try
+;; one parser, then the next, then the next, and so on.
+(defn parse-or
+  "Choice of several parsers."
+  [& parsers]
+  (fn [state]
+    (some #(% state) parsers)))

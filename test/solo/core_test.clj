@@ -54,3 +54,38 @@
     (is (= ((expect-char \f) "foo")
            {:val "f" :rest "oo"}))
     (is (nil? ((expect-char \f) "bar")))))
+
+(deftest test-parse
+  (testing "parse correctly chains together multiple parsers."
+    (is (= ((parse
+             (expect-char \[)
+             [list (parse-while (partial not= \]))]
+             (expect-char \])
+             (constant list)) "[this is a list]")
+           {:val "this is a list" :rest ""})))
+  (testing "Returns nil on failure."
+    (is (nil? ((parse
+                (expect-char \[)
+                [list (parse-while (partial not= \]))]
+                (expect-char \]))
+               "zazzle! pop!")))))
+
+(deftest test-parse-or
+  (testing "Returns the first parser's value if said parser parses."
+    (is (= ((parse-or
+             (expect-char \f)
+             (parse-while (partial = \o)))
+            "foo"))
+        {:val "f" :rest "oo"}))
+  (testing "Returns the first non-nil parser value."
+    (is (= ((parse-or
+             (parse-while (partial = \f))
+             (expect-char \z)
+             (expect-char \f))
+            "foo")
+           {:val "f" :rest "oo"})))
+  (testing "Returns nil if no parsers succeed."
+    (is (nil? ((parse-or
+                (expect-char \f)
+                (expect-char \o)
+                (parse-while (fn [c] (some #{c} "sdfoaij")))) "haha! this won't work")))))
