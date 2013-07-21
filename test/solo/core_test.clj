@@ -121,3 +121,22 @@
            {:val "foo" :rest "bar"})))
   (testing "Returns nil if the string is not present."
     (is (nil? ((parse-string "foo") "fobar")))))
+
+(deftest test-sep-by
+  (testing "Separates one parser's output by another."
+    (is (= ((sep-by
+             parse-int
+             (parse-while #(Character/isWhitespace %)))
+            "123 456 789")
+           {:val '(123 456 789) :rest ""})))
+  (testing "Correctly leaves the rest of the string."
+    (is (= ((sep-by
+             parse-int
+             (parse-while #(Character/isWhitespace %)))
+            "123 456 789foo ")
+           {:val '(123 456 789) :rest "foo "})))
+  (testing "Returns nil if the first parser does not parse."
+    (is (nil? ((sep-by
+                (expect-char \f)
+                (parse-many (expect-char \o)))
+               "ofoo")))))

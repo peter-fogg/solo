@@ -168,3 +168,15 @@
      [rest (parse-string (rest string))]
      (constant (apply str c rest)))
     (constant '())))
+
+;; sep-by allows us to separate a string by a particular parser. This
+;; makes it easy to, say, split up a sentence by whitespace.
+(defn sep-by
+  "Parse a list of `left`, separated by `right`."
+  [left right]
+  (parse
+   [first left]
+   [rest (parse-or
+          (parse right (sep-by left right))
+          (constant '()))]
+   (constant (cons first rest))))
