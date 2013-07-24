@@ -36,9 +36,6 @@
         {:val val
          :rest rest}))))
 
-(def parse-int
-  (map-parser read-string (parse-while #(some #{%} "0123456789"))))
-
 (defn chain-parser
   "Combine two parsers into a new one."
   [left right]
@@ -128,3 +125,12 @@
           (parse right (sep-by left right))
           (constant '()))]
    (constant (cons first rest))))
+
+(defn parse-maybe
+  "Option parser. Return a nil value if `parser` fails."
+  [parser]
+  (fn [state]
+    (if-let [result (parser state)]
+      result
+      {:val nil
+       :rest state})))
