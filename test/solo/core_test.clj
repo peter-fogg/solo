@@ -28,13 +28,6 @@
   (testing "Returns nil on failure."
     (is (nil? ((parse-while #(= % \f)) "ooooo")))))
 
-(deftest test-parse-int
-  (testing "Parses an integer correctly."
-    (is (= (parse-int "123foo")
-           {:val 123 :rest "foo"})))
-  (testing "Returns nil on failure."
-    (is (nil? (parse-int "foo")))))
-
 (deftest test-get-state
   (testing "Accesses the current state of the parser."
     (is (= (get-state "foo")
@@ -125,16 +118,16 @@
 (deftest test-sep-by
   (testing "Separates one parser's output by another."
     (is (= ((sep-by
-             parse-int
+             (parse-many (one-of "0123456789"))
              (parse-while #(Character/isWhitespace %)))
             "123 456 789")
-           {:val '(123 456 789) :rest ""})))
+           {:val '("123" "456" "789") :rest ""})))
   (testing "Correctly leaves the rest of the string."
     (is (= ((sep-by
-             parse-int
+             (parse-many (one-of "0123456789"))
              (parse-while #(Character/isWhitespace %)))
             "123 456 789foo ")
-           {:val '(123 456 789) :rest "foo "})))
+           {:val '("123" "456" "789") :rest "foo "})))
   (testing "Returns nil if the first parser does not parse."
     (is (nil? ((sep-by
                 (expect-char \f)
