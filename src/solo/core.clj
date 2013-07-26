@@ -78,15 +78,21 @@
   (fn [state]
     (some #(% state) parsers)))
 
+(declare parse-many1)
+
 (defn parse-many
   "Repeatedly apply `parser`."
   [parser]
-  (fn [state]
-    ((parse
-      [val parser]
-      [rest (parse-or (parse-many parser) (constant []))]
-      (constant (apply str (cons val rest))))
-     state)))
+  (parse-or (parse-many1 parser)
+            (constant "")))
+
+(defn parse-many1
+  "Repeatedly apply `parser`, requiring that it parse at least once."
+  [parser]
+  (parse
+   [val parser]
+   [rest (parse-many parser)]
+   (constant (apply str (cons val rest)))))
 
 (defn one-of
   "Parse any of the supplied characters."

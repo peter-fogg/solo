@@ -87,8 +87,16 @@
   (testing "Returns the correct parsed string."
     (is (= ((parse-many (expect-char \f)) "ffffoo")
            {:val "ffff" :rest "oo"})))
+  (testing "Returns the empty string parser if it does not parse."
+    (is (= ((parse-many (expect-char \f)) "nope")
+           {:val "" :rest "nope"}))))
+
+(deftest test-parse-many1
+  (testing "Returns the correct parsed string."
+    (is (= ((parse-many (expect-char \f)) "ffffoo")
+           {:val "ffff" :rest "oo"})))
   (testing "Returns nil if it does not parse."
-    (is (nil? ((parse-many
+    (is (nil? ((parse-many1
                 (parse-while #(some #{%} "abcdefg")))
                "zazzle! pop!")))))
 
@@ -133,3 +141,11 @@
                 (expect-char \f)
                 (parse-many (expect-char \o)))
                "ofoo")))))
+
+(deftest test-parse-maybe
+  (testing "Returns the correct value on a successful parse."
+    (is (= ((parse-maybe (parse-string "foobar")) "foobarbaz")
+           {:val "foobar" :rest "baz"})))
+  (testing "Returns a constant nil value if parser fails."
+    (is (= ((parse-maybe (parse-string "zazzle")) "foobarbaz")
+           {:val nil :rest "foobarbaz"}))))
