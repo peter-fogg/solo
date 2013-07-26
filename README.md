@@ -12,4 +12,4 @@ as I attempt to learn more about monadic parsing.
 
 Copyright © 2013 Peter Fogg.
 
-Distributed under the Eclipse Public License, the same as Clojure.
+Distributed under the MIT License.
