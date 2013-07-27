@@ -43,9 +43,19 @@
   {\n \newline
    \r \return
    \t \tab
+   \b \backspace
+   \f \formfeed
    \" \"
    \' \'
    \\ \\})
+
+(def parse-unicode
+  (parse
+   (expect-char \\)
+   (expect-char \u)
+   (map-parser
+    #(char (Integer/parseInt (apply str %) 16))
+    (parse-n 4 (one-of "0123456789abcdef")))))
 
 (defn parse-string-literal
   "Parse a string literal, delimited by `quote`, with escaping."
@@ -54,6 +64,7 @@
    quote quote
    (parse-many
     (parse-or
+     parse-unicode
      (parse-escaped escape-chars)
      (not-char quote)))))
 

@@ -157,3 +157,10 @@
   (testing "Returns a constant nil value if parser fails."
     (is (= ((parse-maybe (parse-string "zazzle")) "foobarbaz")
            {:val nil :rest "foobarbaz"}))))
+
+(deftest test-parse-n
+  (testing "Parses exactly n occurrences of parser."
+    (is (= ((parse-n 4 (expect-char \f)) "ffffffooo")
+           {:val '(\f \f \f \f) :rest "ffooo"})))
+  (testing "Returns nil if less than n are present."
+    (is (nil? ((parse-n 4 (expect-char \f)) "foo")))))

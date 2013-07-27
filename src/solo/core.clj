@@ -140,3 +140,12 @@
       result
       {:val nil
        :rest state})))
+
+(defn parse-n
+  "Run `parser` n times, returning a list."
+  [n parser]
+  (if (zero? n)
+    (constant '())
+    (parse
+     [thing parser]
+     (map-parser #(cons thing %) (parse-n (dec n) parser)))))

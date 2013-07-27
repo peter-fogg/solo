@@ -49,7 +49,10 @@
            {:val "foo" :rest "bar"})))
   (testing "Correctly parses escaped characters."
     (is (= ((parse-string-literal \') "'\\'foo'bar")
-           {:val "'foo" :rest "bar"}))))
+           {:val "'foo" :rest "bar"})))
+  (testing "Correctly parses unicode characters."
+    (is (= ((parse-string-literal \') "'what\\u203d', they said")
+           {:val "what‽" :rest ", they said"}))))
 
 (def test-whitespace
   (testing "Parses whitespace."
