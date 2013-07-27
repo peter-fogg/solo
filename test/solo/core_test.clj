@@ -28,6 +28,14 @@
   (testing "Returns nil on failure."
     (is (nil? ((parse-while #(= % \f)) "ooooo")))))
 
+(deftest test-chain-parser
+  (testing "Correctly chains two parsers."
+    (is (= ((chain-parser (expect-char \f) (fn [_] (expect-char \o))) "foo")
+           {:val \o :rest "o"})))
+  (testing "Returns nil if either parser fails."
+    (is (and (nil? ((chain-parser (expect-char \f) (fn [_] (expect-char \f))) "foo"))
+             (nil? ((chain-parser (expect-char \o) (fn [_] (expect-char \o))) "foo"))))))
+
 (deftest test-get-state
   (testing "Accesses the current state of the parser."
     (is (= (get-state "foo")
