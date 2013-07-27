@@ -33,6 +33,24 @@
   (testing "Returns nil on failure."
     (is (= ((parse-delimited \; \a (parse-many (not-char \a))) "foo")))))
 
+(deftest test-parse-escaped
+  (testing "Correctly escapes characters."
+    (is (= ((parse-escaped {\f \o}) "\\foo")
+           {:val \o :rest "oo"})))
+  (testing "Does not escape characters when not preceded by a backslash."
+    (is (nil? ((parse-escaped {\f \o}) "foo"))))
+  (testing "Doesn't affect characters not in the replacements map."
+    (is (= ((parse-escaped {\f \o}) "\\pop")
+           {:val \p :rest "op"}))))
+
+(deftest test-parse-string-literal
+  (testing "Correctly parses strings."
+    (is (= ((parse-string-literal \") "\"foo\"bar")
+           {:val "foo" :rest "bar"})))
+  (testing "Correctly parses escaped characters."
+    (is (= ((parse-string-literal \') "'\\'foo'bar")
+           {:val "'foo" :rest "bar"}))))
+
 (def test-whitespace
   (testing "Parses whitespace."
     (is (= (whitespace " foo")

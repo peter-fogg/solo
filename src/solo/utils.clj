@@ -31,14 +31,31 @@
   (expect-char end)
   (constant string)))
 
-(def parse-string-literal
-  "Parse a string literal, delimited by double quotes."
-  (parse-delimited \" \" (parse-many (not-char \"))))
+(defn parse-escaped
+  [chars]
+  (parse
+   (expect-char \\)
+   [char parse-char]
+   (constant (or (chars char) char))))
 
-(def parse-string-literal-option
-  "Allow the option of single or double quotes in a string literal."
-  (parse-or (parse-delimited \' \' (parse-many (not-char \')))
-            parse-string-literal))
+(def escape-chars
+  "Normal escape characters for string literals."
+  {\n \newline
+   \r \return
+   \t \tab
+   \" \"
+   \' \'
+   \\ \\})
+
+(defn parse-string-literal
+  "Parse a string literal, delimited by `quote`, with escaping."
+  [quote]
+  (parse-delimited
+   quote quote
+   (parse-many
+    (parse-or
+     (parse-escaped escape-chars)
+     (not-char quote)))))
 
 (def whitespace
   (one-of " \n\t\r"))
