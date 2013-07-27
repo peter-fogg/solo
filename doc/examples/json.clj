@@ -23,27 +23,34 @@
   "Parse a single field (key: value) of a JSON object. We'll represent
    keys (usually strings) as Clojure keywords."
   (parse
-   [key parse-string-literal]
+   [key (parse-string-literal \")]
    (expect-char \:)
    spaces
    [value parse-json]
    (constant [(keyword key) value])))
 
+(defn wrap-spaces
+  "Parse parse, possibly surrounded by whitespace."
+  [parser]
+  (parse
+   spaces
+   [string parser]
+   spaces
+   (constant string)))
+
 (def json-object
   "Parse the whole JSON object."
   (parse
-   (expect-char \{)
-   [items (sep-by json-object-field comma)]
-   (expect-char \})
+   [items (parse-delimited
+           \{ \}
+           (wrap-spaces (sep-by json-object-field comma)))]
    (constant (into {} items))))
 
 (def json-array
   "Parse a JSON array."
-  (parse
-   (expect-char \[)
-   [items (sep-by parse-json comma)]
-   (expect-char \])
-   (constant items)))
+  (parse-delimited
+   \[ \]
+   (wrap-spaces (sep-by parse-json comma))))
 
 (def json-number
   (parse-or parse-float
@@ -56,6 +63,6 @@
     json-object
     json-array
     json-number
-    parse-string-literal)))
+    (parse-string-literal \"))))
 
-(print (:val (parse-json test-object)))
+(print (parse-json test-object))
