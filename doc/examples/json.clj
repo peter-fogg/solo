@@ -8,19 +8,6 @@
 
 (def test-object "{\"foo\" : 3 , \"bar\": {\"pies\": [3.4,   2 ]} }")
 
-(def spaces
-  "Maybe parse lots of whitespace."
-  (parse-maybe (parse-many whitespace)))
-
-(defn wrap-spaces
-  "Parse parse, possibly surrounded by whitespace."
-  [parser]
-  (parse
-   spaces
-   [string parser]
-   spaces
-   (constant string)))
-
 (def comma
   "The separator for objects and arrays."
   (wrap-spaces (expect-char \,)))
@@ -39,13 +26,13 @@
   (map-parser
    #(into {} %)
    (parse-delimited
-    \{ \}
+    (expect-char \{) (expect-char \})
     (wrap-spaces (sep-by json-object-field comma)))))
 
 (def json-array
   "Parse a JSON array."
   (parse-delimited
-   \[ \]
+   (expect-char \[) (expect-char \])
    (wrap-spaces (sep-by parse-json comma))))
 
 (def json-number

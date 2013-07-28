@@ -78,21 +78,31 @@
   (fn [state]
     (some #(% state) parsers)))
 
-(declare parse-many1)
-
-(defn parse-many
-  "Repeatedly apply `parser`."
+(defn parse-maybe
+  "Option parser. Return a nil value if `parser` fails."
   [parser]
-  (parse-or (parse-many1 parser)
-            (constant "")))
+  (fn [state]
+    (if-let [result (parser state)]
+      result
+      {:val nil
+       :rest state})))
 
 (defn parse-many1
   "Repeatedly apply `parser`, requiring that it parse at least once."
   [parser]
   (parse
    [val parser]
-   [rest (parse-many parser)]
+   [rest (parse-or (parse-many1 parser) (constant []))]
    (constant (apply str (cons val rest)))))
+
+(defn parse-many
+  [parser]
+  (parse
+   [first (parse-maybe parser)]
+   [rest (parse-or (parse-many1 parser) (constant []))]
+   (constant (apply str (if first
+                          (cons first rest)
+                          rest)))))
 
 (defn one-of
   "Parse any of the supplied characters."
@@ -131,15 +141,6 @@
           (parse right (sep-by left right))
           (constant '()))]
    (constant (cons first rest))))
-
-(defn parse-maybe
-  "Option parser. Return a nil value if `parser` fails."
-  [parser]
-  (fn [state]
-    (if-let [result (parser state)]
-      result
-      {:val nil
-       :rest state})))
 
 (defn parse-n
   "Run `parser` n times, returning a list."

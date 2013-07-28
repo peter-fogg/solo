@@ -22,13 +22,12 @@
    ;; In case you were wondering
 
 (defn parse-delimited
- "Parse `parser` delimited by the given `begin` and `end`
- characters."
+ "Parse `parser` delimited by the given `begin` and `end` parsers"
  [begin end parser]
  (parse
-  (expect-char begin)
+  begin
   [string parser]
-  (expect-char end)
+  end
   (constant string)))
 
 (defn parse-escaped
@@ -61,7 +60,8 @@
   "Parse a string literal, delimited by `quote`, with escaping."
   [quote]
   (parse-delimited
-   quote quote
+   (expect-char quote)
+   (expect-char quote)
    (parse-many
     (parse-or
      parse-unicode
@@ -70,3 +70,10 @@
 
 (def whitespace
   (one-of " \n\t\r"))
+
+(def spaces
+  "Maybe parse lots of whitespace."
+  (parse-maybe (parse-many whitespace)))
+
+(def wrap-spaces
+  (partial parse-delimited spaces spaces))
