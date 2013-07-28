@@ -93,16 +93,16 @@
   (parse
    [val parser]
    [rest (parse-or (parse-many1 parser) (constant []))]
-   (constant (apply str (cons val rest)))))
+   (constant (cons val rest))))
 
 (defn parse-many
   [parser]
   (parse
    [first (parse-maybe parser)]
    [rest (parse-or (parse-many1 parser) (constant []))]
-   (constant (apply str (if first
-                          (cons first rest)
-                          rest)))))
+   (constant (if first
+               (cons first rest)
+               rest))))
 
 (defn one-of
   "Parse any of the supplied characters."

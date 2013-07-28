@@ -94,15 +94,15 @@
 (deftest test-parse-many
   (testing "Returns the correct parsed string."
     (is (= ((parse-many (expect-char \f)) "ffffoo")
-           {:val "ffff" :rest "oo"})))
+           {:val '(\f \f \f \f) :rest "oo"})))
   (testing "Returns the empty string parser if it does not parse."
     (is (= ((parse-many (expect-char \f)) "nope")
-           {:val "" :rest "nope"}))))
+           {:val [] :rest "nope"}))))
 
 (deftest test-parse-many1
   (testing "Returns the correct parsed string."
     (is (= ((parse-many (expect-char \f)) "ffffoo")
-           {:val "ffff" :rest "oo"})))
+           {:val '(\f \f \f \f) :rest "oo"})))
   (testing "Returns nil if it does not parse."
     (is (nil? ((parse-many1
                 (parse-while #(some #{%} "abcdefg")))
@@ -113,7 +113,7 @@
     (is (= ((one-of "abcd") "a string")
            {:val \a :rest " string"}))
     (is (= ((parse-many (one-of "abcdefg")) "gefbaabec!abacaba")
-           {:val "gefbaabec" :rest "!abacaba"})))
+           {:val '(\g \e \f \b \a \a \b \e \c) :rest "!abacaba"})))
   (testing "Returns nil if no characters are found."
     (is (nil? ((one-of "abcd") "ha, nope")))))
 
@@ -137,13 +137,13 @@
              (parse-many (one-of "0123456789"))
              (parse-while #(Character/isWhitespace %)))
             "123 456 789")
-           {:val '("123" "456" "789") :rest ""})))
+           {:val '((\1 \2 \3) (\4 \5 \6) (\7 \8 \9)) :rest ""})))
   (testing "Correctly leaves the rest of the string."
     (is (= ((sep-by
              (parse-many (one-of "0123456789"))
              (parse-while #(Character/isWhitespace %)))
             "123 456 789foo ")
-           {:val '("123" "456" "789") :rest "foo "})))
+           {:val '((\1 \2 \3) (\4 \5 \6) (\7 \8 \9)) :rest "foo "})))
   (testing "Returns nil if the first parser does not parse."
     (is (nil? ((sep-by
                 (expect-char \f)

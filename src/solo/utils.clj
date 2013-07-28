@@ -59,14 +59,16 @@
 (defn parse-string-literal
   "Parse a string literal, delimited by `quote`, with escaping."
   [quote]
-  (parse-delimited
-   (expect-char quote)
-   (expect-char quote)
-   (parse-many
-    (parse-or
-     parse-unicode
-     (parse-escaped escape-chars)
-     (not-char quote)))))
+  (map-parser
+   #(apply str %)
+   (parse-delimited
+    (expect-char quote)
+    (expect-char quote)
+    (parse-many
+     (parse-or
+      parse-unicode
+      (parse-escaped escape-chars)
+      (not-char quote))))))
 
 (def whitespace
   (one-of " \n\t\r"))
