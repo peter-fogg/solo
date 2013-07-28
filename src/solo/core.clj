@@ -82,10 +82,11 @@
   "Option parser. Return a nil value if `parser` fails."
   [parser]
   (fn [state]
-    (if-let [result (parser state)]
-      result
-      {:val nil
-       :rest state})))
+    (when-not (empty? state)
+      (if-let [result (parser state)]
+        result
+        {:val nil
+         :rest state}))))
 
 (defn parse-many1
   "Repeatedly apply `parser`, requiring that it parse at least once."
