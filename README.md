@@ -4,9 +4,10 @@
 
 Monadic parsing in Clojure.
 
-This is primary for (my) educational purposes; don't expect it to work
-properly! Instead, think of it as a journey through my thought process
-as I attempt to learn more about monadic parsing.
+This is primarily for (my) educational purposes; it's likely to have
+bugs or poor design decisions. That said, if you stumble across this
+and actually use it, let me know! It would be good to get an idea of
+what pain points (or bugs) there are.
 
 ## License
 
