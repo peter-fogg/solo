@@ -101,10 +101,10 @@
 
 (deftest test-parse-many1
   (testing "Returns the correct parsed string."
-    (is (= ((parse-many (expect-char \f)) "ffffoo")
+    (is (= ((parse-many-1 (expect-char \f)) "ffffoo")
            {:val '(\f \f \f \f) :rest "oo"})))
   (testing "Returns nil if it does not parse."
-    (is (nil? ((parse-many1
+    (is (nil? ((parse-many-1
                 (parse-while #(some #{%} "abcdefg")))
                "zazzle! pop!")))))
 
@@ -131,24 +131,38 @@
   (testing "Returns nil if the string is not present."
     (is (nil? ((parse-string "foo") "fobar")))))
 
-(deftest test-sep-by
+(deftest test-sep-by1
   (testing "Separates one parser's output by another."
-    (is (= ((sep-by
+    (is (= ((sep-by-1
              (parse-many (one-of "0123456789"))
              (parse-while #(Character/isWhitespace %)))
             "123 456 789")
            {:val '((\1 \2 \3) (\4 \5 \6) (\7 \8 \9)) :rest ""})))
   (testing "Correctly leaves the rest of the string."
-    (is (= ((sep-by
+    (is (= ((sep-by-1
              (parse-many (one-of "0123456789"))
              (parse-while #(Character/isWhitespace %)))
             "123 456 789foo ")
            {:val '((\1 \2 \3) (\4 \5 \6) (\7 \8 \9)) :rest "foo "})))
   (testing "Returns nil if the first parser does not parse."
-    (is (nil? ((sep-by
+    (is (nil? ((sep-by-1
                 (expect-char \f)
                 (parse-many (expect-char \o)))
                "ofoo")))))
+
+(deftest test-sep-by
+  (testing "Acts like sep-by-1."
+    (is (= ((sep-by
+             (parse-many (one-of "0123456789"))
+             (parse-while #(Character/isWhitespace %)))
+            "123 456 789")
+           {:val '((\1 \2 \3) (\4 \5 \6) (\7 \8 \9)) :rest ""})))
+  (testing "Returns the empty list if the first parser does not parse."
+    (is (= ((sep-by
+             (expect-char \f)
+             (parse-many (expect-char \o)))
+            "ofoo")
+           {:val [] :rest "ofoo"}))))
 
 (deftest test-parse-maybe
   (testing "Returns the correct value on a successful parse."

@@ -6,7 +6,7 @@
 
 (declare parse-json)
 
-(def test-object "{\"foo\" : 3 , \"bar\": {\"pies\": [3.4,   2 ]} }")
+(def test-object "{\"foo\" : 3 , \"bar\": {\"pies\": [3.4,   2], \"spies\": []} }")
 
 (def comma
   "The separator for objects and arrays."

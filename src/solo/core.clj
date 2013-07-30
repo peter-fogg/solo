@@ -88,19 +88,19 @@
         {:val nil
          :rest state}))))
 
-(defn parse-many1
+(defn parse-many-1
   "Repeatedly apply `parser`, requiring that it parse at least once."
   [parser]
   (parse
    [val parser]
-   [rest (parse-or (parse-many1 parser) (constant []))]
+   [rest (parse-or (parse-many-1 parser) (constant []))]
    (constant (cons val rest))))
 
 (defn parse-many
   [parser]
   (parse
    [first (parse-maybe parser)]
-   [rest (parse-or (parse-many1 parser) (constant []))]
+   [rest (parse-or (parse-many-1 parser) (constant []))]
    (constant (if first
                (cons first rest)
                rest))))
@@ -133,15 +133,30 @@
      (constant (apply str c rest)))
     (constant '())))
 
-(defn sep-by
-  "Parse a list of `left`, separated by `right`."
+(defn sep-by-1
+  "Parse a list of at least one `left`, separated by `right`."
   [left right]
   (parse
    [first left]
    [rest (parse-or
-          (parse right (sep-by left right))
-          (constant '()))]
+          (parse right (sep-by-1 left right))
+          (constant []))]
    (constant (cons first rest))))
+
+(defn sep-by
+  "Parse a list of `left`, separated by `right`."
+  [left right]
+  (parse
+   [first (parse-maybe left)]
+   ;; This seems quite messy to me, but seems necessary in order to
+   ;; ensure that `right` doesn't consume any input.
+   [rest (if first
+           (parse-or (parse right (sep-by-1 left right))
+                     (constant []))
+           (constant []))]
+   (constant (if first
+               (cons first rest)
+               []))))
 
 (defn parse-n
   "Run `parser` n times, returning a list."
