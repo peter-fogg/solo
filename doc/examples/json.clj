@@ -48,4 +48,4 @@
     json-number
     (parse-string-literal \"))))
 
-(print (parse-json test-object))
+(print (parse-json {:state test-object :pos 0}))

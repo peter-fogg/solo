@@ -1,58 +1,78 @@
 (ns solo.core)
 
+(defn err
+  "Attach an error message `msg` to `parser`."
+  [parser msg]
+  (fn [state]
+    (let [result (parser state)]
+      (if (:err result)
+        (assoc result :err msg)
+        result))))
+
 (defn satisfy
   "Returns a parser accepting a character satisfying `pred`."
   [pred]
-  (fn [state]
+  (fn [{state :state pos :pos}]
     (let [c (first state)]
-      (when (and c (pred c))
+      (if (and c (pred c))
         {:val c
-         :rest (apply str (rest state))}))))
+         :rest (apply str (rest state))
+         :pos (inc pos)}
+        {:pos pos
+         :err "satisfy"}))))
 
-(def parse-char (satisfy (fn [_] true)))
+(def parse-char (err (satisfy (fn [_] true)) "any character"))
 
 (defn constant
   "The constant parser."
   [val]
-  (fn [state]
+  (fn [{state :state pos :pos}]
     {:val val
-     :rest state}))
+     :rest state
+     :pos pos}))
 
 (defn map-parser
   "Map `f` across the result of `parser`."
   [f parser]
   (fn [state]
-    (when-let [result (parser state)]
-      (assoc result :val (f (:val result))))))
+    (let [result (parser state)]
+      (if-let [val (:val result)]
+        (assoc result :val (f val))
+        result))))
 
 (defn parse-while
   "Return a parser consuming as long as `pred` is true."
   [pred]
-  (fn [state]
+  (fn [{state :state pos :pos}]
     (let [val (apply str (take-while pred state))
-          rest (apply str (drop-while pred state))]
+          len (count val)
+          rest (apply str (drop len state))]
       (if (empty? val)
-        nil
+        {:pos pos
+         :err "parse-while"}
         {:val val
-         :rest rest}))))
+         :rest rest
+         :pos (+ pos len)}))))
 
 (defn chain-parser
   "Combine two parsers into a new one."
   [left right]
-  (fn [state]
-    (when-let [{val :val new-state :rest} (left state)]
-      ((right val) new-state))))
+  (fn [{state :state pos :pos :as input}]
+    (let [result (left input)]
+      (if (:err result)
+        result
+        ((right (:val result)) {:state (:rest result) :pos (:pos result)})))))
 
 (defn get-state
   "Get the current state of the parser."
-  [state]
-  {:val state :rest state})
+  [{state :state pos :pos}]
+  {:val state :rest state :pos pos})
 
 (defn put-state
   "Modify the state of the parser."
   [state]
-  (fn [_]
-    {:val '() :rest state}))
+  (fn [{pos :pos}]
+    {:val '() :rest state :pos pos}))
 
 (defmacro parse [& body]
   (cond
@@ -70,23 +90,30 @@
 (defn expect-char
   "Expect `char`, and fail if not present."
   [char]
-  (satisfy (partial = char)))
+  (err (satisfy (partial = char)) (str "character '" char "'")))
 
 (defn parse-or
   "Choice of several parsers."
   [& parsers]
-  (fn [state]
-    (some #(% state) parsers)))
+  (fn [{state :state pos :pos :as input}]
+    (let [results (map #(% input) parsers)]
+      (if-let [result (first (filter #(not (nil? (:val %))) results))]
+        result
+        (first results)))))
 
 (defn parse-maybe
   "Option parser. Return a nil value if `parser` fails."
   [parser]
-  (fn [state]
-    (when-not (empty? state)
-      (if-let [result (parser state)]
-        result
-        {:val nil
-         :rest state}))))
+  (fn [{state :state pos :pos :as input}]
+    (if-not (empty? state)
+      (let [result (parser input)]
+        (if (:val result)
+          result
+          {:val nil
+           :rest state
+           :pos pos}))
+      {:err "end of input"
+       :pos pos})))
 
 (defn parse-many-1
   "Repeatedly apply `parser`, requiring that it parse at least once."
@@ -113,10 +140,13 @@
 (defn not-char
   "Reject the supplied character."
   [char]
-  (fn [state]
-    (when-not (= char (first state))
-      {:val (str (first state))
-       :rest (apply str (rest state))})))
+  (fn [{state :state pos :pos}]
+    (if-not (= char (first state))
+      {:val (first state)
+       :rest (apply str (rest state))
+       :pos (inc pos)}
+      {:err (str "didn't expect '" char "'")
+       :pos pos})))
 
 (defn none-of
   "Reject any of the supplied characters."
@@ -166,3 +196,8 @@
     (parse
      [thing parser]
      (map-parser #(cons thing %) (parse-n (dec n) parser)))))
+
+(defn to-parse
+  "Put a plain string into the right format for parsing."
+  [string]
+  {:state string :pos 0})
